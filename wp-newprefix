@@ -1,0 +1,113 @@
+#!/bin/bash
+
+PLATFORM_DIR="$(cd "$(dirname "$0")"; pwd)"
+LIB_DIR="${PLATFORM_DIR}"/lib
+PRESETS_DIR="${PLATFORM_DIR}"/presets
+
+print_usage() {
+  echo "Usage: $0 [-CS] [-p preset...] <path>"
+  echo "       $0 -l"
+  echo "       $0 -h"
+  echo
+  echo "Creates a winepreset prefix in the supplied path."
+  echo
+  echo "  -C         do not inherit 'common' preset"
+  echo "  -S         do not execute setup script"
+  echo "  -h         print this help text"
+  echo "  -l         list available presets"
+  echo "  -p preset  inherit preset"
+  exit
+}
+
+list_presets() {
+    echo 'Available presets:'
+
+    for file in "${PRESETS_DIR}"/*.sh; do
+        preset_name="$(sed 's/\.sh$//' <<< "$(basename "${file}")")"
+        echo " - ${preset_name}"
+    done
+
+    exit
+}
+
+create_prefix() {
+    echo "installing to $install_dir"
+
+    set -e
+
+    if ! [[ -d "${install_dir}" ]]; then
+        mkdir "${install_dir}"
+    fi
+
+    ln -s "${PLATFORM_DIR}" "${install_dir}"/platform
+
+    (
+        echo '# Set up paths'
+        echo '# Make sure to edit this when moving the directory.'
+        echo "WP_DATA_PATH='$(cd "${install_dir}"; pwd)'"
+        echo 'WP_PLATFORM_PATH="${WP_DATA_PATH}"/platform'
+        echo
+        echo '# Load platform library'
+        echo 'source "${WP_PLATFORM_PATH}"/lib/init.sh'
+        echo
+        echo '# Inherit presets'
+
+        for preset in "${presets[@]}"; do
+            echo "inherit '$preset'"
+        done
+
+        echo
+        echo '# Initialize variables; this must be called, and must be called after all calls'
+        echo '# to inherit'
+        echo 'wp_init'
+    ) > "${install_dir}"/env
+
+    (
+        cd "${install_dir}"
+        set +e
+
+        source ./env
+        wp_setup
+    )
+}
+
+no_common=0
+no_setup=0
+presets=()
+
+while getopts 'CShlp:' arg; do
+  case ${arg} in
+    C)
+      no_common=1
+      ;;
+    S)
+      no_setup=1
+      ;;
+    h)
+      print_usage
+      ;;
+    l)
+      list_presets
+      ;;
+    p)
+      presets+=("${OPTARG}")
+      ;;
+    *)
+      print_usage
+      ;;
+  esac
+done
+
+shift $((OPTIND-1))
+
+if [[ "${#@}" -eq 0 ]]; then
+    print_usage
+fi
+
+install_dir="$1"
+
+if [[ $no_common -eq 0 ]]; then
+    presets=(common "${presets[@]}")
+fi
+
+create_prefix
