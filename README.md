@@ -8,6 +8,15 @@ importantly, presets can inherit other presets. This allows for sharing
 common functionality (such as setting up dxvk or setting up a game launcher
 that gets used by multiple games) between multiple presets.
 
+## Dependencies
+
+- bash
+- coreutils
+- dialog
+- wget
+- wine
+- winetricks
+
 ## Usage
 
 1. Clone this repo into some directory. The directory you clone into must stay
