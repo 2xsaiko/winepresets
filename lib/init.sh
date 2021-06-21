@@ -11,11 +11,14 @@ if ! [[ -d "${WP_PLATFORM_PATH}" ]]; then
     die "WP_PLATFORM_PATH not set or is not a directory!"
 fi
 
-WPDEBUG="${WPDEBUG:-0}"
-WP_INTERACTIVE="${WP_INTERACTIVE:-0}"
+export WP_DATA_PATH
+export WP_PLATFORM_PATH
+
+export WPDEBUG="${WPDEBUG:-0}"
+export WP_INTERACTIVE="${WP_INTERACTIVE:-0}"
 WP_PATH_AT_INIT="${PATH}"
-CACHE_DIR="${WP_PLATFORM_PATH}/cache"
-FILES_DIR="${WP_PLATFORM_PATH}/files"
+export CACHE_DIR="${WP_PLATFORM_PATH}/cache"
+export FILES_DIR="${WP_PLATFORM_PATH}/files"
 WP_INHERITS=()
 WP_PRESET_STACK=()
 PS1="(winepreset) ${PS1}"
@@ -58,113 +61,6 @@ setup() {
     echo "To create launch scripts, run mklaunch <name> <command...>"
 }
 
-dlcache() {
-    if ! [[ -d "${CACHE_DIR}" ]]; then
-        mkdir "${CACHE_DIR}"
-    fi
-
-    if ! [[ -f "${CACHE_DIR}/$1" ]]; then
-        wget -O "${CACHE_DIR}/$1" "$2"
-    fi
-}
-
-mklaunch() {
-    file="$1"
-    shift
-
-    (
-        echo '#!/bin/bash'
-        echo
-        echo 'set -e'
-        echo 'source "$(dirname "$0")"/env'
-        echo
-        printf 'PROGRAM=('
-        
-        for arg in "${@}"; do
-            printf "'%s' " "${arg}"
-        done
-        
-        echo ')'
-        echo 'EXEC_DIR="$(dirname "$(win2unixpath "${PROGRAM[0]}")")"'
-        echo
-        echo 'cd "${EXEC_DIR}"'
-        echo 'exec wine "${PROGRAM[@]}" "${@}"'
-    ) > "${WP_DATA_PATH}/${file}"
-    
-    chmod +x "${WP_DATA_PATH}/${file}"
-}
-
-win2unixpath() {
-    if grep -iq '^[A-Z]:\\' <<< "$1"; then
-        (
-            cd "${WINEPREFIX}/dosdevices/" || return 1
-            fpath="$(tr '\\' '/' <<< "$1")" || return 1
-            wp_cicd "$(dirname "${fpath}")" || return 1
-            file="$(wp_correct_case "$(basename "${fpath}")")" || return 1
-            echo "${PWD}/${file}"
-        )
-    else
-        echo "$1"
-    fi
-}
-
-wp_cicd() {
-    local savedpath parts first part found entry
-    savedpath="${PWD}"
-
-    if ! [[ "$ZSH_VERSION" = "" ]]; then
-        parts=("${(s[/])1}")
-    else
-        IFS=/ read -raparts <<< "$1"
-    fi
-
-    first=0
-    for part in "${parts[@]}"; do
-        if [[ $first -eq 0 ]] && [[ "${part}" = "" ]]; then
-            cd /
-        fi
-
-        case "${part}" in
-            ""|".")
-                ;;
-            "..")
-                cd ..
-                ;;
-            *)
-                entry="$(wp_correct_case "${part}")"
-
-                if [[ $? -eq 0 ]]; then
-                    cd "${entry}"
-                else
-                    echo "wp_cicd: $1: No such file or directory" >&2
-                    cd "${savedpath}"
-                    return 1
-                fi
-
-                ;;
-        esac
-        first=1
-    done
-}
-
-wp_correct_case() {
-    for entry in *; do
-        if ! [[ "$ZSH_VERSION" = "" ]]; then
-            [[ "${1:l}" = "${entry:l}" ]]
-        else
-            [[ "${1,,}" = "${entry,,}" ]]
-        fi
-        
-        if [[ $? -eq 0 ]]; then
-            echo "${entry}"
-            return 0
-        fi
-    done
-    
-    echo "wp_correct_case: $1: No such file or directory" >&2
-    return 1
-}
-
 wp_init() {
     WP_WINE_VERSION="$(${WINE} --version)"
 
@@ -174,7 +70,7 @@ wp_init() {
 
     debug 1 "using wine version '${WP_WINE_VERSION}' (at ${WINE})"
 
-    export PATH="$(dirname ${WINE}):${WP_PATH_AT_INIT}"
+    export PATH="$(dirname ${WINE}):${WP_PATH_AT_INIT}:${WP_PLATFORM_PATH}/libexec"
     init
 }
 
@@ -204,7 +100,7 @@ wp_preset_push() {
     WP_PRESET_STACK+=("$1")
 }
 
-wp_preset_pop() {    
+wp_preset_pop() {
     # unfortunately zsh doesn't decrease the array size with 'unset' so we have
     # to special-case it, and the zsh code doesn't work in bash
     if ! [[ "$ZSH_VERSION" = "" ]]; then

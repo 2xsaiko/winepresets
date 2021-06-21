@@ -1,0 +1,62 @@
+#!/bin/bash
+
+cicd() {
+    local savedpath parts first part found entry
+    savedpath="${PWD}"
+
+    IFS=/ read -raparts <<< "$1"
+
+    first=0
+    for part in "${parts[@]}"; do
+        if [[ $first -eq 0 ]] && [[ "${part}" = "" ]]; then
+            cd /
+        fi
+
+        case "${part}" in
+            ""|".")
+                ;;
+            "..")
+                cd ..
+                ;;
+            *)
+                entry="$(correct_case "${part}")"
+
+                if [[ $? -eq 0 ]]; then
+                    cd "${entry}"
+                else
+                    echo "$0: $1: No such file or directory" >&2
+                    cd "${savedpath}"
+                    return 1
+                fi
+
+                ;;
+        esac
+        first=1
+    done
+}
+
+correct_case() {
+    for entry in *; do
+        [[ "${1,,}" = "${entry,,}" ]]
+
+        if [[ $? -eq 0 ]]; then
+            echo "${entry}"
+            return 0
+        fi
+    done
+
+    echo "$0: $1: No such file or directory" >&2
+    return 1
+}
+
+if grep -iq '^[A-Z]:' <<< "$1"; then
+    (
+        cd "${WINEPREFIX:-$HOME/.wine}/dosdevices/" || exit 1
+        fpath="$(tr '\\' '/' <<< "$1")" || exit 1
+        cicd "$(dirname "${fpath}")" || exit 1
+        file="$(correct_case "$(basename "${fpath}")")" || exit 1
+        echo "${PWD}/${file}"
+    )
+else
+    echo "$1"
+fi

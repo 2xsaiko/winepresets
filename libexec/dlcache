@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if ! [[ -d "${WP_PLATFORM_PATH}" ]]; then
+    echo "Please run from a winepresets environment only." >&2
+    exit 10
+fi
+
+if ! [[ -d "${CACHE_DIR}" ]]; then
+    mkdir "${CACHE_DIR}"
+fi
+
+if ! [[ -f "${CACHE_DIR}/$1" ]]; then
+    wget -O "${CACHE_DIR}/$1" "$2"
+fi

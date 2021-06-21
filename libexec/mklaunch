@@ -1,0 +1,30 @@
+#!/bin/bash
+
+if ! [[ -d "${WP_PLATFORM_PATH}" ]]; then
+    echo "Please run from a winepresets environment only." >&2
+    exit 10
+fi
+
+file="$1"
+shift
+
+(
+    echo '#!/bin/bash'
+    echo
+    echo 'set -e'
+    echo 'source "$(dirname "$0")"/env'
+    echo
+    printf 'PROGRAM=('
+
+    for arg in "${@}"; do
+        printf "'%s' " "${arg}"
+    done
+
+    echo ')'
+    echo 'EXEC_DIR="$(dirname "$(win2unixpath "${PROGRAM[0]}")")"'
+    echo
+    echo 'cd "${EXEC_DIR}"'
+    echo 'exec wine "${PROGRAM[@]}" "${@}"'
+) > "${WP_DATA_PATH}/${file}"
+
+chmod +x "${WP_DATA_PATH}/${file}"
