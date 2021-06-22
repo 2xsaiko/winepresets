@@ -13,6 +13,7 @@ that gets used by multiple games) between multiple presets.
 - bash
 - coreutils
 - dialog
+- dos2unix
 - wget
 - wine
 - winetricks

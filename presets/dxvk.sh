@@ -8,5 +8,7 @@ export __GL_SHADER_DISK_CACHE_PATH="${WP_DATA_PATH}/cache"
 EXPORT_FUNCTIONS setup
 
 dxvk_setup() {
+    common_setup
     winetricks dxvk
 }
+

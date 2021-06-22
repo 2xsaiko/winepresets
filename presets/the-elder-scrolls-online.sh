@@ -23,13 +23,14 @@ the-elder-scrolls-online_setup() {
 
     tmpdir="/tmp/eso_install_$RANDOM"
     mkdir "${tmpdir}" || die 'failed to create temp directory'
-    
+
     unzip -d "${tmpdir}/installer" "${CACHE_DIR}"/Install_ESO.exe
     unzip -d "${tmpdir}/resource1" "${tmpdir}/installer/InstallerData/Disk1/InstData/Resource1.zip" || die 'failed to extract launcher files'
     mkdir -p "${WINEPREFIX}/drive_c/Program Files (x86)/Zenimax Online" || die 'failed to create install directory'
     cp -rv "${tmpdir}/resource1/\$IA_PROJECT_DIR$/src_path/Launcher" "${WINEPREFIX}/drive_c/Program Files (x86)/Zenimax Online/Launcher" || die 'failed to copy install files'
-    
+
     rm -r "${tmpdir}"
-    
+
     mklaunch 'launcher.sh' 'C:\Program Files (x86)\Zenimax Online\Launcher\Bethesda.net_Launcher.exe'
 }
+

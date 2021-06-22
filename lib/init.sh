@@ -25,6 +25,7 @@ PS1="(winepreset) ${PS1}"
 export WINEPREFIX="${WP_DATA_PATH}/prefix"
 # e.g. winetricks uses this
 export WINE="$(which wine)"
+export WINEDEBUG="${WINEDEBUG:--all}"
 
 inherit() {
     for el in "${@}"; do
@@ -69,7 +70,7 @@ wp_init() {
 
     debug 1 "using wine version '${WP_WINE_VERSION}' (at ${WINE})"
 
-    export PATH="$(dirname ${WINE}):${WP_PATH_AT_INIT}:${WP_PLATFORM_PATH}/libexec"
+    export PATH="$(dirname ${WINE}):${WP_PLATFORM_PATH}/libexec:${WP_PATH_AT_INIT}"
     init
 }
 

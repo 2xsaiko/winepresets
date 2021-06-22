@@ -5,18 +5,17 @@ LIB_DIR="${PLATFORM_DIR}"/lib
 PRESETS_DIR="${PLATFORM_DIR}"/presets
 
 print_usage() {
-  echo "Usage: $0 [-CS] [-p preset...] <path>"
-  echo "       $0 -l"
-  echo "       $0 -h"
-  echo
-  echo "Creates a winepreset prefix in the supplied path."
-  echo
-  echo "  -C         do not inherit 'common' preset"
-  echo "  -S         do not execute setup script"
-  echo "  -h         print this help text"
-  echo "  -l         list available presets"
-  echo "  -p preset  inherit preset"
-  exit
+    echo "Usage: $0 [-S] [-p preset...] <path>"
+    echo "       $0 -l"
+    echo "       $0 -h"
+    echo
+    echo "Creates a winepreset prefix in the supplied path."
+    echo
+    echo "  -S         do not execute setup script"
+    echo "  -h         print this help text"
+    echo "  -l         list available presets"
+    echo "  -p preset  inherit preset"
+    exit
 }
 
 list_presets() {
@@ -71,15 +70,11 @@ create_prefix() {
     )
 }
 
-no_common=0
 no_setup=0
 presets=()
 
 while getopts 'CShlp:' arg; do
   case ${arg} in
-    C)
-      no_common=1
-      ;;
     S)
       no_setup=1
       ;;
@@ -105,9 +100,5 @@ if [[ "${#@}" -eq 0 ]]; then
 fi
 
 install_dir="$1"
-
-if [[ $no_common -eq 0 ]]; then
-    presets=(common "${presets[@]}")
-fi
-
+presets=(common "${presets[@]}")
 create_prefix

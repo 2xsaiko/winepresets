@@ -1,5 +1,5 @@
 inherit win64 battlenet
-inherit dxvk esync 
+inherit dxvk esync
 
 EXPORT_FUNCTIONS setup
 
@@ -12,3 +12,4 @@ overwatch_setup() {
     mkdir -pv "${WINEPREFIX}/drive_c/users/$USER/My Documents/Overwatch/Settings/"
     cp -v "${FILES_DIR}/overwatch/Settings_v0.ini" "${WINEPREFIX}/drive_c/users/$USER/My Documents/Overwatch/Settings/Settings_v0.ini"
 }
+

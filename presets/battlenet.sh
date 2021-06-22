@@ -1,6 +1,7 @@
 EXPORT_FUNCTIONS setup
 
 battlenet_setup() {
+    common_setup
     winetricks arial
 
     dlcache 'Battle.net-Setup.exe' 'https://eu.battle.net/download/getInstaller?os=win&installer=Battle.net-Setup.exe'
